@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clock App with Alarms</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: linear-gradient(270deg, #1e1e2f, #3a3a5a, #1e1e2f);
+        background-size: 600% 600%;
+        color: #fff;
+        animation: gradientBG 20s ease infinite;
+      }
+      @keyframes gradientBG {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+      .app-container {
+        width: 95%;
+        max-width: 500px;
+        background: rgba(0, 0, 0, 0.65);
+        padding: 20px;
+        border-radius: 20px;
+        box-shadow: 0 0 40px #00eaff;
+      }
+      .tabs {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 15px;
+      }
+      .tabs button {
+        flex: 1;
+        padding: 10px;
+        margin: 0 3px;
+        background: #222;
+        color: #00eaff;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: 0.3s;
+        font-weight: bold;
+      }
+      .tabs button.active {
+        background: #00eaff;
+        color: #000;
+        box-shadow: 0 0 10px #00eaff;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      #digitalTime {
+        font-size: 2.2rem;
+        letter-spacing: 2px;
+        text-align: center;
+        margin-bottom: 15px;
+        text-shadow: 0 0 10px #00eaff, 0 0 20px #00eaff;
+      }
+      #day,
+      #date {
+        text-align: center;
+        margin-top: 5px;
+        color: #00eaff;
+      }
+      .blink {
+        animation: blink 1s infinite;
+      }
+      select,
+      input,
+      button {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 10px;
+        border: none;
+        outline: none;
+        transition: 0.3s;
+      }
+      select,
+      input[type="time"],
+      input[type="file"],
+      input[type="number"],
+      input[type="text"] {
+        background: #222;
+        color: #fff;
+      }
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 15px #00eaff;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+        max-height: 150px;
+        overflow-y: auto;
+        margin-top: 10px;
+      }
+      li {
+        background: #222;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 0 10px #00eaff;
+      }
+      li button {
+        background: #ff4c4c;
+        color: #fff;
+        box-shadow: 0 0 5px #ff4c4c;
+      }
+      li button:hover {
+        box-shadow: 0 0 15px #ff4c4c;
+      }
+      .next-alarm {
+        background: #ffcc00;
+        color: #000;
+        box-shadow: 0 0 15px #ffcc00 !important;
+      }
+      .stopwatch,
+      .timer {
+        background: rgba(0, 0, 0, 0.5);
+        padding: 15px;
+        border-radius: 15px;
+        box-shadow: 0 0 20px #ffcc00;
+        margin-top: 10px;
+        text-align: center;
+      }
+      #stopwatchTime,
+      #timerTime {
+        font-size: 2rem;
+        color: #ffcc00;
+        text-shadow: 0 0 10px #ffcc00;
+        margin-bottom: 10px;
+      }
+      .sw-buttons button,
+      .tm-buttons button {
+        background: #ffcc00;
+        color: #000;
+        margin: 5px;
+        box-shadow: 0 0 10px #ffcc00;
+      }
+      #upcomingAlarms {
+        margin-top: 10px;
+        text-align: left;
+        color: #ff6;
+      }
+      .weekdays label {
+        margin-right: 5px;
+      }
+      @media (max-width: 480px) {
+        #digitalTime {
+          font-size: 1.6rem;
+        }
+        #stopwatchTime,
+        #timerTime {
+          font-size: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="openTab('clockTab',this)">
+          Clock
+        </button>
+        <button class="tab-btn" onclick="openTab('alarmTab',this)">
+          Alarms
+        </button>
+        <button class="tab-btn" onclick="openTab('stopwatchTab',this)">
+          Stopwatch
+        </button>
+        <button class="tab-btn" onclick="openTab('timerTab',this)">
+          Timer
+        </button>
+      </div>
+
+      <!-- CLOCK TAB -->
+      <div id="clockTab" class="tab-content active">
+        <div id="digitalTime"></div>
+        <div id="day"></div>
+        <div id="date"></div>
+        <select id="timezone" onchange="updateTime()">
+          <option value="local">Local Time</option>
+          <option value="Asia/Kolkata">India (IST)</option>
+          <option value="UTC">UTC</option>
+          <option value="America/New_York">USA (NY)</option>
+          <option value="Europe/London">UK (London)</option>
+          <option value="Asia/Tokyo">Japan</option>
+          <option value="Australia/Sydney">Australia</option>
+        </select>
+        <div id="upcomingAlarms">
+          <strong>Upcoming Alarms:</strong>
+          <ul id="upcomingList"></ul>
+        </div>
+      </div>
+
+      <!-- ALARMS TAB -->
+      <div id="alarmTab" class="tab-content">
+        <input type="time" id="alarmInput" />
+        <input type="text" id="alarmLabel" placeholder="Alarm Name" />
+        <label
+          >Snooze (minutes):
+          <input type="number" id="snoozeInput" value="5" min="1"
+        /></label>
+        <div class="weekdays">
+          <label><input type="checkbox" value="0" />Sun</label>
+          <label><input type="checkbox" value="1" />Mon</label>
+          <label><input type="checkbox" value="2" />Tue</label>
+          <label><input type="checkbox" value="3" />Wed</label>
+          <label><input type="checkbox" value="4" />Thu</label>
+          <label><input type="checkbox" value="5" />Fri</label>
+          <label><input type="checkbox" value="6" />Sat</label>
+        </div>
+        <input type="file" id="customSound" accept="audio/*" />
+        <button onclick="addAlarm()">Add Alarm</button>
+        <button onclick="snoozeAlarm()">Snooze</button>
+        <button onclick="stopAlarm()">Stop Alarm</button>
+        <ul id="alarmList"></ul>
+      </div>
+
+      <!-- STOPWATCH TAB -->
+      <div id="stopwatchTab" class="tab-content">
+        <div class="stopwatch">
+          <div id="stopwatchTime">00:00:00</div>
+          <div class="sw-buttons">
+            <button onclick="startStopwatch()">Start</button>
+            <button onclick="stopStopwatch()">Stop</button>
+            <button onclick="resetStopwatch()">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIMER TAB -->
+      <div id="timerTab" class="tab-content">
+        <input type="number" id="timerInput" placeholder="Minutes" min="0" />
+        <div class="timer">
+          <div id="timerTime">00:00:00</div>
+          <div class="tm-buttons">
+            <button onclick="startTimer()">Start</button>
+            <button onclick="stopTimer()">Stop</button>
+            <button onclick="resetTimer()">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ---------------- TAB FUNCTION ----------------
+      function openTab(tabId, btn) {
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((tc) => tc.classList.remove("active"));
+        document.getElementById(tabId).classList.add("active");
+      }
+
+      // ---------------- CLOCK & ALARMS ----------------
+      let alarms = JSON.parse(localStorage.getItem("alarms")) || [];
+      let ringing = false,
+        snoozeTime = null,
+        alarmSound = new Audio(
+          "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"
+        );
+
+      function getNow() {
+        const tz = document.getElementById("timezone").value;
+        return tz === "local"
+          ? new Date()
+          : new Date(new Date().toLocaleString("en-US", { timeZone: tz }));
+      }
+
+      function pad(num) {
+        return String(num).padStart(2, "0");
+      }
+      function saveAlarms() {
+        localStorage.setItem("alarms", JSON.stringify(alarms));
+      }
+
+      function updateTime() {
+        const now = getNow();
+        const hh = pad(now.getHours());
+        const mm = pad(now.getMinutes());
+        const ss = pad(now.getSeconds());
+
+        // DIGITAL CLOCK
+        const h12 = pad(now.getHours() % 12 || 12);
+        const ampm = now.getHours() >= 12 ? "PM" : "AM";
+        document.getElementById(
+          "digitalTime"
+        ).innerHTML = `${h12}<span class="blink">:</span>${mm}<span class="blink">:</span>${ss} ${ampm}`;
+        const days = [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ];
+        document.getElementById("day").textContent = days[now.getDay()];
+        document.getElementById("date").textContent = `${pad(
+          now.getDate()
+        )}-${pad(now.getMonth() + 1)}-${now.getFullYear()}`;
+
+        // CHECK ALARMS
+        alarms.forEach((alarm) => {
+          const [ah, am] = alarm.time.split(":").map(pad);
+          if (hh === ah && mm === am && !alarm.triggered) {
+            if (
+              alarm.weekdays.length === 0 ||
+              alarm.weekdays.includes(now.getDay())
+            ) {
+              ringAlarm(alarm.sound, alarm.label);
+              alarm.triggered = true;
+              setTimeout(() => {
+                alarm.triggered = false;
+              }, 60000);
+            }
+          }
+        });
+
+        // SNOOZE
+        if (snoozeTime) {
+          const [sh, sm] = snoozeTime.split(":");
+          if (hh === sh && mm === sm) {
+            ringAlarm(alarmSound.src, "Snoozed Alarm");
+            snoozeTime = null;
+          }
+        }
+
+        renderUpcomingAlarms();
+      }
+
+      // ---------------- ALARMS ----------------
+      function addAlarm() {
+        const time = document.getElementById("alarmInput").value;
+        const label = document.getElementById("alarmLabel").value || "Alarm";
+        const fileInput = document.getElementById("customSound");
+        let sound = alarmSound.src;
+        if (fileInput.files.length > 0)
+          sound = URL.createObjectURL(fileInput.files[0]);
+
+        const weekdayInputs = document.querySelectorAll(
+          '.weekdays input[type="checkbox"]'
+        );
+        let weekdays = [];
+        weekdayInputs.forEach((cb) => {
+          if (cb.checked) weekdays.push(parseInt(cb.value));
+        });
+
+        if (time) {
+          alarms.push({ time, label, sound, weekdays });
+          saveAlarms();
+          renderAlarms();
+          renderUpcomingAlarms();
+        }
+      }
+
+      function deleteAlarm(index) {
+        alarms.splice(index, 1);
+        saveAlarms();
+        renderAlarms();
+        renderUpcomingAlarms();
+      }
+
+      function renderAlarms() {
+        const list = document.getElementById("alarmList");
+        list.innerHTML = "";
+        alarms.forEach((alarm, index) => {
+          const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+          const daysText =
+            alarm.weekdays.length > 0
+              ? alarm.weekdays.map((d) => days[d]).join(",")
+              : "Once";
+          const li = document.createElement("li");
+          li.innerHTML = `<span>⏰ ${alarm.time} - ${alarm.label} (${daysText})</span><button onclick="deleteAlarm(${index})">❌</button>`;
+          list.appendChild(li);
+        });
+      }
+
+      function renderUpcomingAlarms() {
+        const list = document.getElementById("upcomingList");
+        list.innerHTML = "";
+        const now = getNow();
+        const sortedAlarms = alarms.slice().sort((a, b) => {
+          const [ah, am] = a.time.split(":").map(Number);
+          const [bh, bm] = b.time.split(":").map(Number);
+          const aTime = new Date(now);
+          aTime.setHours(ah);
+          aTime.setMinutes(am);
+          aTime.setSeconds(0);
+          const bTime = new Date(now);
+          bTime.setHours(bh);
+          bTime.setMinutes(bm);
+          bTime.setSeconds(0);
+          return aTime - bTime;
+        });
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        sortedAlarms.forEach((alarm, index) => {
+          const li = document.createElement("li");
+          const [hr, min] = alarm.time.split(":").map(Number);
+          const ampm = hr >= 12 ? "PM" : "AM";
+          const h12 = hr % 12 || 12;
+          const daysText =
+            alarm.weekdays.length > 0
+              ? alarm.weekdays.map((d) => days[d]).join(",")
+              : "Once";
+          li.textContent = `⏰ ${pad(h12)}:${pad(min)} - ${
+            alarm.label
+          } (${daysText})`;
+          if (index === 0) li.classList.add("next-alarm");
+          list.appendChild(li);
+        });
+      }
+
+      function ringAlarm(soundSrc, label) {
+        ringing = true;
+        alarmSound.pause();
+        alarmSound = new Audio(soundSrc);
+        alarmSound.loop = true;
+        alarmSound.play();
+        if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("Alarm: " + label);
+        } else if (
+          "Notification" in window &&
+          Notification.permission !== "denied"
+        ) {
+          Notification.requestPermission().then((permission) => {
+            if (permission === "granted") new Notification("Alarm: " + label);
+          });
+        }
+      }
+      function stopAlarm() {
+        alarmSound.pause();
+        alarmSound.currentTime = 0;
+        ringing = false;
+        if (navigator.vibrate) navigator.vibrate(0);
+      }
+      function snoozeAlarm() {
+        if (!ringing) return;
+        const snoozeMinutes =
+          parseInt(document.getElementById("snoozeInput").value) || 5;
+        const now = getNow();
+        now.setMinutes(now.getMinutes() + snoozeMinutes);
+        snoozeTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        stopAlarm();
+      }
+
+      setInterval(updateTime, 1000);
+      updateTime();
+      renderAlarms();
+      renderUpcomingAlarms();
+
+      // ---------------- STOPWATCH ----------------
+      let swInterval = null,
+        swTime = 0;
+      function updateStopwatchDisplay() {
+        const ms = swTime % 100;
+        const totalSec = Math.floor(swTime / 100);
+        const s = totalSec % 60;
+        const m = Math.floor(totalSec / 60);
+        document.getElementById("stopwatchTime").textContent = `${pad(m)}:${pad(
+          s
+        )}:${pad(ms)}`;
+      }
+      function startStopwatch() {
+        if (swInterval) return;
+        swInterval = setInterval(() => {
+          swTime++;
+          updateStopwatchDisplay();
+        }, 10);
+      }
+      function stopStopwatch() {
+        clearInterval(swInterval);
+        swInterval = null;
+      }
+      function resetStopwatch() {
+        stopStopwatch();
+        swTime = 0;
+        updateStopwatchDisplay();
+      }
+
+      // ---------------- TIMER ----------------
+      let timerInterval = null,
+        timerRemaining = 0;
+      function updateTimerDisplay() {
+        const totalSec = Math.floor(timerRemaining / 100);
+        const s = totalSec % 60;
+        const m = Math.floor(totalSec / 60);
+        document.getElementById("timerTime").textContent = `${pad(m)}:${pad(
+          s
+        )}:${pad(timerRemaining % 100)}`;
+      }
+      function startTimer() {
+        if (timerInterval) return;
+        const inputMin =
+          parseInt(document.getElementById("timerInput").value) || 0;
+        if (timerRemaining <= 0) timerRemaining = inputMin * 60 * 100;
+        if (timerRemaining <= 0) return;
+        timerInterval = setInterval(() => {
+          timerRemaining--;
+          updateTimerDisplay();
+          if (timerRemaining <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            ringAlarm(alarmSound.src, "Timer Finished");
+          }
+        }, 10);
+      }
+      function stopTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      function resetTimer() {
+        stopTimer();
+        timerRemaining = 0;
+        updateTimerDisplay();
+      }
+    </script>
+  </body>
+</html>
